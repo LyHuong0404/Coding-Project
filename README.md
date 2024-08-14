@@ -23,10 +23,10 @@ Before running the tests, ensure that you have the following installed:
 ## Setting up the Environment
 
 1. **Clone the repository:**
-   git clone https://github.com/LyHuong0404/Coding-Project.git
-   cd Coding-Project
+   - git clone https://github.com/LyHuong0404/Coding-Project.git
+   - cd Coding-Project
 2. **Install dependencies:**
-   npm install or yarn install
+   - npm install or yarn install
 
 # Run the project
 
