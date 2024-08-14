@@ -14,14 +14,15 @@ interface SearchProps {
 const Search: React.FC<SearchProps> = () => {
     const [searchValue, setSearchValue] = useState<string | null>(null);
     const [products, setProducts] = useState<Product[]>([]);
-    const [hasMore, setHasMore] = useState(true);
-    const [skip, setSkip] = useState(20);
+    const [hasMore, setHasMore] = useState<boolean>(true);
+    const [skip, setSkip] = useState<number>(0);
 
     const getDataInit = () => {
         try {
             const fetchData = async () => {
                 const response = await getProductList(0);
                 setProducts(response);
+                setSkip(20);
             };
             fetchData();
         } catch (err) {
@@ -35,10 +36,12 @@ const Search: React.FC<SearchProps> = () => {
 
     useEffect(() => {
         try {
+            !hasMore && setHasMore(true);
             if (searchValue !== '' && searchValue !== null) {
                 const fetchData = async () => {
-                    const response = await searchProducts(searchValue);
+                    const response = await searchProducts(searchValue, 0);
                     setProducts(response);
+                    setSkip(20);
                 };
                 fetchData();
             }
@@ -56,6 +59,24 @@ const Search: React.FC<SearchProps> = () => {
                         setHasMore(false);
                     } else {
                         setProducts((prev) => [...prev, ...response]);
+                        if (response.length < 20) {
+                            setHasMore(false);
+                            return;
+                        }
+                        setSkip(skip + 20);
+                    }
+                }
+            } else {
+                const response = await searchProducts(searchValue, skip);
+                if (response) {
+                    if (response.length === 0) {
+                        setHasMore(false);
+                    } else {
+                        setProducts((prev) => [...prev, ...response]);
+                        if (response.length < 20) {
+                            setHasMore(false);
+                            return;
+                        }
                         setSkip(skip + 20);
                     }
                 }
@@ -69,15 +90,20 @@ const Search: React.FC<SearchProps> = () => {
         if (value === null) {
             return;
         }
-        if (value === '') {
-            setSkip(20);
-            getDataInit();
-        }
         setSearchValue(value);
+        if (value === '') {
+            getDataInit();
+        } 
     }, []);
 
     return (
-        <InfiniteScroll dataLength={products?.length} next={loadMoreData} hasMore={hasMore} loader>
+        <InfiniteScroll
+            dataLength={products?.length}
+            next={loadMoreData}
+            hasMore={hasMore}
+            loader={<h4>Loading...</h4>}
+            endMessage={<p style={{ textAlign: 'center' }}>No more items to show</p>}
+        >
             <div className="bg-white">
                 <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6 lg:max-w-7xl lg:px-8">
                     <div className="relative rounded-md shadow-sm">
