@@ -1,23 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import InfiniteScroll from 'react-infinite-scroll-component';
+import { toast } from 'react-toastify';
 
 import Searchbar from '../../components/Searchbar';
 import ProductItem from '../../components/ProductItem';
 import { getProductList, searchProducts } from '../../actions/productActions';
+import { Product } from '../../models/Product';
 
 interface SearchProps {
     children: React.ReactNode;
 }
 
-interface Product {
-    id: number;
-    title: string;
-    price: number;
-    thumbnail: string;
-}
-
 const Search: React.FC<SearchProps> = () => {
-    const [searchValue, setSearchValue] = useState<string>('');
+    const [searchValue, setSearchValue] = useState<string | null>(null);
     const [products, setProducts] = useState<Product[]>([]);
     const [hasMore, setHasMore] = useState(true);
     const [skip, setSkip] = useState(20);
@@ -27,62 +22,70 @@ const Search: React.FC<SearchProps> = () => {
             const fetchData = async () => {
                 const response = await getProductList(0);
                 setProducts(response);
-                setSkip(20);
             };
             fetchData();
-        } catch (err) {}
-    }
-    
+        } catch (err) {
+            toast.error('Something went wrong. Please try again.');
+        }
+    };
+
     useEffect(() => {
         getDataInit();
     }, []);
 
     useEffect(() => {
         try {
-            if (searchValue !== '') {
+            if (searchValue !== '' && searchValue !== null) {
                 const fetchData = async () => {
                     const response = await searchProducts(searchValue);
                     setProducts(response);
                 };
                 fetchData();
             }
-        } catch (err) {}
-    }, [searchValue])
+        } catch (err) {
+            toast.error('Something went wrong. Please try again.');
+        }
+    }, [searchValue]);
 
     const loadMoreData = async () => {
         try {
-            if (searchValue === '') {
+            if (searchValue === '' || searchValue === null) {
                 const response = await getProductList(skip);
-                if (response.length === 0) {
-                    setHasMore(false);
-                } else {
-                    setProducts((prev) => [...prev, ...response]);
-                    setSkip(skip + 20);
+                if (response) {
+                    if (response.length === 0) {
+                        setHasMore(false);
+                    } else {
+                        setProducts((prev) => [...prev, ...response]);
+                        setSkip(skip + 20);
+                    }
                 }
-            } 
-        } catch (err) {}
+            }
+        } catch (err) {
+            toast.error('Something went wrong. Please try again.');
+        }
     };
 
-
-    const getSearchValue = (value: string): void => {
+    const getSearchValue = useCallback((value: string | null): void => {
+        if (value === null) {
+            return;
+        }
         if (value === '') {
-            setSkip(0);
+            setSkip(20);
             getDataInit();
         }
         setSearchValue(value);
-    };
+    }, []);
 
     return (
-        <InfiniteScroll
-            dataLength={products?.length}
-            next={loadMoreData}
-            hasMore={hasMore}
-            loader
-        >
+        <InfiniteScroll dataLength={products?.length} next={loadMoreData} hasMore={hasMore} loader>
             <div className="bg-white">
-                <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6 sm:py-24 lg:max-w-7xl lg:px-8">
+                <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6 lg:max-w-7xl lg:px-8">
                     <div className="relative rounded-md shadow-sm">
-                        <Searchbar onChangeValue={getSearchValue} />
+                        <Searchbar
+                            onChangeValue={getSearchValue}
+                            placeholder="Search products by name"
+                            className="pl-16 mb-6 block w-full rounded-md border-0 py-1.5 pr-20 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                        />
                     </div>
                     <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 xl:gap-x-8">
                         {products?.map((item) => (

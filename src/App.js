@@ -1,5 +1,7 @@
 import { Suspense, Fragment } from 'react';
 import { Routes, Route } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 import { publicRoutes } from './routes';
 import DefaultLayout from '../src/layouts/DefaultLayout';
@@ -34,6 +36,7 @@ function App() {
                     })}
                 </Routes>
             </Suspense>
+            <ToastContainer autoClose={2000} />
         </div>
     );
 }

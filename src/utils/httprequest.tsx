@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const httprequest = axios.create({
-    baseURL: 'https://dummyjson.com/',
+    baseURL: process.env.REACT_APP_BACKEND_URL,
 });
 
 export const get = async (apipath: string, params = {}) => {
